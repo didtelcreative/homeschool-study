@@ -1,0 +1,55 @@
+# Homeschool Study
+
+A homeschool-first study and mastery app focused on helping children learn through active recall, especially spoken answers.
+
+## Current Phase
+
+**V0.1 — Voice Proof of Concept**
+
+The goal of this version is to prove the core study loop:
+
+1. Show a question
+2. Record a spoken answer
+3. Transcribe the answer
+4. Grade the response
+5. Give immediate feedback
+6. Update a simple mastery score
+
+## V0.1 Scope
+
+This version is intentionally small.
+
+It currently focuses on:
+
+- One child
+- Hard-coded study questions
+- Browser-based microphone recording
+- Speech-to-text transcription
+- Simple answer grading
+- Immediate feedback
+- Basic mastery scoring
+- Lightweight private access to protect AI usage
+
+## Not Included Yet
+
+The following are intentionally postponed until later phases:
+
+- Full parent accounts
+- Child profiles
+- Curriculum importing
+- Spaced repetition
+- Parent dashboards
+- Cloud syncing
+- Subscriptions
+- Screen-time controls
+- Full production authentication
+
+## Development Direction
+
+V0.1 is being built as a browser-based web app so the voice-powered study experience can be validated without requiring Mac/Xcode development.
+
+The long-term production platform will be decided after the core learning experience is proven.
+
+## Product Goal
+
+Make homeschool review easier for parents and more independent, effective, and engaging for children.
