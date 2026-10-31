@@ -1,23 +1,21 @@
-export type StudyConcept = {
-  id: string;
-  label: string;
-  aliases: string[];
-};
+import type { StudyConcept, StudyQuestion } from "./study-model";
 
-export type StudyQuestion = {
-  id: string;
-  subject: string;
-  prompt: string;
-  expectedAnswer: string;
-  hint: string;
-  gradingMode: "key-concepts";
-  concepts: StudyConcept[];
-  startingMastery: number;
-};
+export type { StudyConcept, StudyQuestion } from "./study-model";
+
+export const DEMO_CURRICULUM_ID = "demo-foundations";
+export const DEMO_LEVEL_ID = "starter";
+export const DEMO_CURRENT_WEEK = 3;
 
 export const studyQuestions: StudyQuestion[] = [
   {
     id: "science-states-of-matter",
+    curriculumId: DEMO_CURRICULUM_ID,
+    curriculumLabel: "Demo Foundations",
+    levelId: DEMO_LEVEL_ID,
+    levelLabel: "Starter",
+    lessonId: "week-1-core",
+    lessonLabel: "Week 1",
+    week: 1,
     subject: "Science",
     prompt: "What are the three states of matter?",
     expectedAnswer: "Solid, liquid, and gas.",
@@ -32,6 +30,13 @@ export const studyQuestions: StudyQuestion[] = [
   },
   {
     id: "history-first-president",
+    curriculumId: DEMO_CURRICULUM_ID,
+    curriculumLabel: "Demo Foundations",
+    levelId: DEMO_LEVEL_ID,
+    levelLabel: "Starter",
+    lessonId: "week-1-core",
+    lessonLabel: "Week 1",
+    week: 1,
     subject: "History",
     prompt: "Who was the first president of the United States?",
     expectedAnswer: "George Washington.",
@@ -48,6 +53,13 @@ export const studyQuestions: StudyQuestion[] = [
   },
   {
     id: "math-hexagon-sides",
+    curriculumId: DEMO_CURRICULUM_ID,
+    curriculumLabel: "Demo Foundations",
+    levelId: DEMO_LEVEL_ID,
+    levelLabel: "Starter",
+    lessonId: "week-1-core",
+    lessonLabel: "Week 1",
+    week: 1,
     subject: "Math",
     prompt: "How many sides does a hexagon have?",
     expectedAnswer: "Six.",
@@ -58,6 +70,13 @@ export const studyQuestions: StudyQuestion[] = [
   },
   {
     id: "science-herbivore",
+    curriculumId: DEMO_CURRICULUM_ID,
+    curriculumLabel: "Demo Foundations",
+    levelId: DEMO_LEVEL_ID,
+    levelLabel: "Starter",
+    lessonId: "week-2-core",
+    lessonLabel: "Week 2",
+    week: 2,
     subject: "Science",
     prompt: "What does a herbivore eat?",
     expectedAnswer: "Plants or plant material.",
@@ -74,6 +93,13 @@ export const studyQuestions: StudyQuestion[] = [
   },
   {
     id: "geography-five-oceans",
+    curriculumId: DEMO_CURRICULUM_ID,
+    curriculumLabel: "Demo Foundations",
+    levelId: DEMO_LEVEL_ID,
+    levelLabel: "Starter",
+    lessonId: "week-2-core",
+    lessonLabel: "Week 2",
+    week: 2,
     subject: "Geography",
     prompt: "Name the five oceans.",
     expectedAnswer: "Pacific, Atlantic, Indian, Southern, and Arctic.",
@@ -90,6 +116,13 @@ export const studyQuestions: StudyQuestion[] = [
   },
   {
     id: "science-closest-planet",
+    curriculumId: DEMO_CURRICULUM_ID,
+    curriculumLabel: "Demo Foundations",
+    levelId: DEMO_LEVEL_ID,
+    levelLabel: "Starter",
+    lessonId: "week-2-core",
+    lessonLabel: "Week 2",
+    week: 2,
     subject: "Science",
     prompt: "Which planet is closest to the Sun?",
     expectedAnswer: "Mercury.",
@@ -100,6 +133,13 @@ export const studyQuestions: StudyQuestion[] = [
   },
   {
     id: "civics-three-branches",
+    curriculumId: DEMO_CURRICULUM_ID,
+    curriculumLabel: "Demo Foundations",
+    levelId: DEMO_LEVEL_ID,
+    levelLabel: "Starter",
+    lessonId: "week-3-core",
+    lessonLabel: "Week 3",
+    week: 3,
     subject: "Civics",
     prompt: "What are the three branches of the United States government?",
     expectedAnswer: "Legislative, executive, and judicial.",
@@ -114,6 +154,13 @@ export const studyQuestions: StudyQuestion[] = [
   },
   {
     id: "science-breathing-gas",
+    curriculumId: DEMO_CURRICULUM_ID,
+    curriculumLabel: "Demo Foundations",
+    levelId: DEMO_LEVEL_ID,
+    levelLabel: "Starter",
+    lessonId: "week-3-core",
+    lessonLabel: "Week 3",
+    week: 3,
     subject: "Science",
     prompt: "What gas do humans need to breathe to survive?",
     expectedAnswer: "Oxygen.",
