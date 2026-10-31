@@ -1,7 +1,23 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { studyQuestions } from "../lib/questions";
+import {
+  DEMO_CURRENT_WEEK,
+  DEMO_CURRICULUM_ID,
+  DEMO_LEVEL_ID,
+  studyQuestions,
+} from "../lib/questions";
+import {
+  buildStudySession,
+  createInitialProgress,
+  updateProgressAfterOutcome,
+} from "../lib/learning-engine";
+import type {
+  ProgressByQuestion,
+  QuestionProgress,
+  SessionOutcome,
+  StudyQuestion,
+} from "../lib/study-model";
 
 type AnswerResult = {
   questionId: string;
@@ -14,20 +30,40 @@ type AnswerResult = {
   feedback: string;
 };
 
-type SessionStatus = "strong" | "learning" | "needs-review";
-
 type SessionQuestionResult = {
   questionId: string;
   subject: string;
   prompt: string;
-  status: SessionStatus;
+  status: SessionOutcome;
   mastery: number;
 };
 
-function statusLabel(status: SessionStatus) {
+const SESSION_SIZE = 8;
+
+function statusLabel(status: SessionOutcome) {
   if (status === "strong") return "Strong";
   if (status === "learning") return "Learning";
   return "Needs Review";
+}
+
+function fallbackProgress(question: StudyQuestion): QuestionProgress {
+  return {
+    questionId: question.id,
+    mastery: question.startingMastery,
+    correctStreak: 0,
+    needsReview: false,
+    lastReviewedAt: null,
+    nextReviewAt: null,
+  };
+}
+
+function createSession(progress: ProgressByQuestion) {
+  return buildStudySession(studyQuestions, progress, {
+    curriculumId: DEMO_CURRICULUM_ID,
+    levelId: DEMO_LEVEL_ID,
+    currentWeek: DEMO_CURRENT_WEEK,
+    sessionSize: SESSION_SIZE,
+  }).questions;
 }
 
 export default function StudyClient() {
@@ -35,6 +71,14 @@ export default function StudyClient() {
   const chunksRef = useRef<Blob[]>([]);
   const helpCountRef = useRef(0);
   const questionHadSupportRef = useRef(false);
+
+  const [progressByQuestion, setProgressByQuestion] = useState<ProgressByQuestion>(() =>
+    createInitialProgress(studyQuestions)
+  );
+  const [sessionQuestions, setSessionQuestions] = useState<StudyQuestion[]>(() => {
+    const initialProgress = createInitialProgress(studyQuestions);
+    return createSession(initialProgress);
+  });
 
   const [questionIndex, setQuestionIndex] = useState(0);
   const [recording, setRecording] = useState(false);
@@ -45,15 +89,13 @@ export default function StudyClient() {
   const [error, setError] = useState("");
   const [sessionComplete, setSessionComplete] = useState(false);
   const [sessionResults, setSessionResults] = useState<SessionQuestionResult[]>([]);
-  const [masteryByQuestion, setMasteryByQuestion] = useState<Record<string, number>>(
-    () => Object.fromEntries(studyQuestions.map((q) => [q.id, q.startingMastery]))
-  );
 
-  const question = studyQuestions[questionIndex];
-  const mastery = masteryByQuestion[question.id] ?? question.startingMastery;
-  const progressPercent = ((questionIndex + 1) / studyQuestions.length) * 100;
+  const question = sessionQuestions[questionIndex];
+  const questionProgress = progressByQuestion[question.id] ?? fallbackProgress(question);
+  const mastery = questionProgress.mastery;
+  const progressPercent = ((questionIndex + 1) / sessionQuestions.length) * 100;
 
-  function saveSessionResult(status: SessionStatus, masteryValue: number) {
+  function saveSessionResult(status: SessionOutcome, masteryValue: number) {
     const nextResult: SessionQuestionResult = {
       questionId: question.id,
       subject: question.subject,
@@ -70,6 +112,21 @@ export default function StudyClient() {
       next[existingIndex] = nextResult;
       return next;
     });
+  }
+
+  function recordOutcome(status: SessionOutcome) {
+    const currentProgress = progressByQuestion[question.id] ?? fallbackProgress(question);
+    const updated = updateProgressAfterOutcome(currentProgress, status);
+
+    setProgressByQuestion((current) => ({
+      ...current,
+      [question.id]: updateProgressAfterOutcome(
+        current[question.id] ?? fallbackProgress(question),
+        status
+      ),
+    }));
+
+    saveSessionResult(status, updated.mastery);
   }
 
   function resetQuestionState() {
@@ -167,23 +224,13 @@ export default function StudyClient() {
 
     if (data.outcome === "skipped") {
       questionHadSupportRef.current = true;
-      saveSessionResult("needs-review", mastery);
+      recordOutcome("needs-review");
       setFoundSoFar([]);
       return;
     }
 
     if (data.grade === "correct") {
-      const nextMastery = Math.min(5, mastery + 1);
-
-      setMasteryByQuestion((current) => ({
-        ...current,
-        [question.id]: nextMastery,
-      }));
-
-      saveSessionResult(
-        questionHadSupportRef.current ? "learning" : "strong",
-        nextMastery
-      );
+      recordOutcome(questionHadSupportRef.current ? "learning" : "strong");
       setFoundSoFar([]);
       return;
     }
@@ -196,7 +243,7 @@ export default function StudyClient() {
   }
 
   function nextQuestion() {
-    if (questionIndex >= studyQuestions.length - 1) {
+    if (questionIndex >= sessionQuestions.length - 1) {
       setSessionComplete(true);
       return;
     }
@@ -206,6 +253,8 @@ export default function StudyClient() {
   }
 
   function restartSession() {
+    const nextQuestions = createSession(progressByQuestion);
+    setSessionQuestions(nextQuestions);
     setQuestionIndex(0);
     resetQuestionState();
     setSessionComplete(false);
@@ -236,7 +285,7 @@ export default function StudyClient() {
 
     return (
       <div className="card">
-        <div className="eyebrow">V0.1.5 · Study session complete</div>
+        <div className="eyebrow">V0.2.1 · Study session complete</div>
         <div className="question">Nice work — you finished your study session.</div>
 
         <div
@@ -269,11 +318,12 @@ export default function StudyClient() {
           <strong>Session summary</strong>
 
           <div style={{ marginTop: 12 }}>
-            {studyQuestions.map((item) => {
+            {sessionQuestions.map((item) => {
               const itemResult = sessionResults.find(
                 (sessionItem) => sessionItem.questionId === item.id
               );
-              const itemMastery = masteryByQuestion[item.id] ?? item.startingMastery;
+              const itemMastery =
+                progressByQuestion[item.id]?.mastery ?? item.startingMastery;
 
               return (
                 <div
@@ -290,7 +340,7 @@ export default function StudyClient() {
                   <div>
                     <strong>{item.subject}</strong>
                     <div className="muted" style={{ fontSize: 13 }}>
-                      {itemResult ? statusLabel(itemResult.status) : "Not completed"}
+                      Week {item.week} · {itemResult ? statusLabel(itemResult.status) : "Not completed"}
                     </div>
                   </div>
                   <div style={{ whiteSpace: "nowrap" }}>Mastery {itemMastery}/5</div>
@@ -304,7 +354,7 @@ export default function StudyClient() {
           ↻
         </button>
         <p style={{ textAlign: "center" }} className="muted">
-          Study again
+          Build next study session
         </p>
       </div>
     );
@@ -313,11 +363,14 @@ export default function StudyClient() {
   return (
     <div className="card">
       <div className="eyebrow">
-        {question.subject} · Question {questionIndex + 1} of {studyQuestions.length}
+        {question.curriculumLabel} · Week {question.week} · {question.subject}
+      </div>
+      <div className="muted" style={{ marginTop: 4 }}>
+        Question {questionIndex + 1} of {sessionQuestions.length}
       </div>
 
       <div
-        aria-label={`Study progress: question ${questionIndex + 1} of ${studyQuestions.length}`}
+        aria-label={`Study progress: question ${questionIndex + 1} of ${sessionQuestions.length}`}
         style={{
           height: 8,
           width: "100%",
@@ -361,7 +414,7 @@ export default function StudyClient() {
           : busy
             ? "Listening to your answer…"
             : canMoveOn
-              ? questionIndex === studyQuestions.length - 1
+              ? questionIndex === sessionQuestions.length - 1
                 ? "Ready to finish your session."
                 : "Ready for the next question."
               : foundSoFar.length > 0
@@ -398,7 +451,9 @@ export default function StudyClient() {
 
           {canMoveOn && (
             <button onClick={nextQuestion} style={{ marginTop: 8 }}>
-              {questionIndex === studyQuestions.length - 1 ? "Finish session" : "Next question"}
+              {questionIndex === sessionQuestions.length - 1
+                ? "Finish session"
+                : "Next question"}
             </button>
           )}
         </div>
